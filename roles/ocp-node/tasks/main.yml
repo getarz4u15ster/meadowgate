@@ -1,0 +1,58 @@
+---
+    - name: Check if user is using RHEL
+      assert:
+        that: "ansible_distribution == 'RedHat'"
+    
+    - name: Enable Repos Specific to OCP 3.5
+      command: subscription-manager repos --enable="rhel-7-server-ose-3.5-rpms" --enable="rhel-7-server-rpms" --enable="rhel-7-server-extras-rpms" --enable="rhel-7-fast-datapath-rpms"
+      
+    - name: Update all hosts
+      yum:
+        name: '*'
+        state: latest
+        
+    - name: Installing Dependencies for Openshift Container Platform
+      yum:
+        name:
+          - wget
+          - git
+          - net-tools
+          - bind-utils
+          - iptables-services
+          - bridge-utils
+          - sos
+          - psacct
+          - atomic-openshift-utils
+          - docker
+          - NetworkManager
+    
+    - name: Open ports required for dnsmasq and dns for OCP
+      firewalld:
+        port: "{{ item }}"
+        permanent: true
+        state: enabled
+      with_items:
+        - 8053/udp
+        - 8053/tcp
+        - 53/udp
+        - 53/tcp
+
+    - name: Enable docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: True
+        
+    - name: Ensure NetworkManager Setting for dns is disabled
+      copy:
+        src: NetworkManager.conf
+        dest: "{{ nm_conf }}"
+        owner: root
+        group: root
+        mode: 0644
+        
+    - name: Restart NetworkManager
+      systemd:
+        name: NetworkManager
+        state: restarted
+        enabled: True

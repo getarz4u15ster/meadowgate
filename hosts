@@ -1,0 +1,9 @@
+# Nodes designated for Openshift Masters
+[ocp-master]
+rhgsw2
+
+# Nodes designated for Openshift compute nodes
+[ocp-node]
+rhclient2
+rhclient3
+rhclient4
